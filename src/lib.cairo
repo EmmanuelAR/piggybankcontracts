@@ -7,7 +7,7 @@ pub trait IPiggyBank<TContractState> {
     fn get_current_balance(self: @TContractState) -> u256;
     fn get_block_timestamp(self: @TContractState) -> u64;
     fn deposit(ref self: TContractState, amount: u256, lock_timestamp: u64);
-    fn withdraw(ref self: TContractState);
+    fn withdraw(ref self: TContractState, current_timestamp: u64);
 }
 
 #[starknet::contract]
@@ -80,6 +80,8 @@ pub mod PiggyBank {
         self.is_locked.write(false);
     }
 
+    
+
     // *************************************************************************
     //                            EXTERNAL FUNCTIONS
     // *************************************************************************
@@ -102,26 +104,23 @@ pub mod PiggyBank {
         }
 
         fn deposit(ref self: ContractState, amount: u256, lock_timestamp: u64) {
-            // Only owner can deposit
-            assert(self.owner.read() == get_caller_address(), 'Only owner can deposit');
+            // // Validate amount
+            // assert(amount > 0, 'Amount must be greater than 0');
             
-            // Validate amount
-            assert(amount > 0, 'Amount must be greater than 0');
+            // // Check if already locked
+            // assert(!self.is_locked.read(), 'Piggy bank is already locked');
             
-            // Check if already locked
-            assert(!self.is_locked.read(), 'Piggy bank is already locked');
-            
-            // Validate lock timestamp (must be in the future)
-            let current_timestamp = get_block_timestamp();
-            assert(lock_timestamp > current_timestamp, 'Timestamp must be in the future');
+            // // Validate lock timestamp (must be in the future)
+            // let current_timestamp = get_block_timestamp();
+            // assert(lock_timestamp > current_timestamp, 'Timestamp must be in the future');
             
             // Set lock timestamp and mark as locked
             self.lock_timestamp.write(lock_timestamp);
             self.is_locked.write(true);
             
-            // Transfer tokens from owner to contract
-            let token_dispatcher = self.token_dispatcher();
-            token_dispatcher.transfer_from(get_caller_address(), get_contract_address(), amount);
+            // // Transfer tokens from owner to contract
+            // let token_dispatcher = self.token_dispatcher();
+            // token_dispatcher.transfer_from(get_caller_address(), get_contract_address(), amount);
             
             // Emit deposit event
             self.emit(Event::Deposit(DepositEvent {
@@ -131,15 +130,12 @@ pub mod PiggyBank {
             }));
         }
 
-        fn withdraw(ref self: ContractState) {
-            // Only owner can withdraw
-            assert(self.owner.read() == get_caller_address(), 'Only owner can withdraw');
-            
-            // Check if piggy bank is locked
-            assert(self.is_locked.read(), 'Piggy bank is not locked');
+        fn withdraw(ref self: ContractState, current_timestamp: u64) {
+            // // Check if piggy bank is locked
+            // assert(self.is_locked.read(), 'Piggy bank is not locked');
             
             // Check if lock period has passed
-            let current_timestamp = get_block_timestamp();
+            //let current_timestamp = get_block_timestamp();
             let lock_timestamp = self.lock_timestamp.read();
             assert(current_timestamp >= lock_timestamp, 'Lock period has not ended yet');
             
